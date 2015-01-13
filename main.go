@@ -34,6 +34,10 @@ func main() {
 		Wait: true,
 	}
 
+	if dataFile := os.Getenv("DATA_FILE"); len(dataFile) > 0 {
+		LoadData(dataFile, redisPool.Get())
+	}
+
 	app := martini.Classic()
 	app.Get("/", func() string {
 		return idea(redisPool.Get())
