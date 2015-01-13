@@ -1,8 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/garyburd/redigo/redis"
 	"github.com/go-martini/martini"
@@ -11,13 +12,18 @@ import (
 
 var redisPool *redis.Pool
 
-func idea(redisConn redis.Conn) string {
-	defer redisConn.Close()
-	results, err := redis.Values(redisConn.Do("SRANDMEMBER", "organisations", "2"))
-	if err != nil {
-		panic(err.Error())
-	}
-	return fmt.Sprintf("A cross between %s, and %s.\n", results[0], results[1])
+type idea func() string
+
+type IdeaRegistry struct {
+	IdeaTypes []idea
+}
+
+var registry IdeaRegistry
+
+func (registry IdeaRegistry) GetIdea() string {
+	rand.Seed(time.Now().UnixNano())
+	chosenType := registry.IdeaTypes[rand.Intn(len(registry.IdeaTypes))]
+	return chosenType()
 }
 
 func main() {
@@ -35,12 +41,14 @@ func main() {
 	}
 
 	if dataFile := os.Getenv("DATA_FILE"); len(dataFile) > 0 {
-		LoadData(dataFile, redisPool.Get())
+		LoadData(dataFile)
 	}
+
+	RegisterIdeas()
 
 	app := martini.Classic()
 	app.Get("/", func() string {
-		return idea(redisPool.Get())
+		return registry.GetIdea()
 	})
 	app.Run()
 }
