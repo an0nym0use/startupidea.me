@@ -11,7 +11,8 @@ type Org struct {
 	Name string
 }
 
-func LoadData(filename string, redisConn redis.Conn) error {
+func LoadData(filename string) error {
+	redisConn := redisPool.Get()
 	defer redisConn.Close()
 
 	file, err := ioutil.ReadFile(filename)
