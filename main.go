@@ -12,6 +12,7 @@ import (
 var redisPool *redis.Pool
 
 func idea(redisConn redis.Conn) string {
+	defer redisConn.Close()
 	results, err := redis.Values(redisConn.Do("SRANDMEMBER", "organisations", "2"))
 	if err != nil {
 		panic(err.Error())
@@ -34,9 +35,7 @@ func main() {
 
 	app := martini.Classic()
 	app.Get("/", func() string {
-		redisConn := redisPool.Get()
-		defer redisConn.Close()
-		return idea(redisConn)
+		return idea(redisPool.Get())
 	})
 	app.Run()
 }
