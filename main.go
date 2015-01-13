@@ -31,6 +31,7 @@ func main() {
 			}
 			return redisConn, err
 		},
+		Wait: true,
 	}
 
 	app := martini.Classic()
